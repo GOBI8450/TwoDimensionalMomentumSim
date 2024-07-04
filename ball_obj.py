@@ -1,104 +1,58 @@
-import pygame
-import random
-import math
+import pygame,random,math
+from base_ball import BASE_BALL
 
-#Create pygame music module and load hit sound
 pygame.init()
-sound_hit='collision_sound.wav'
+sound_hit = 'collision_sound.wav'
 pygame.mixer.music.load(sound_hit)
 pygame.mixer.music.set_volume(0.7)
 
+class Ball(BASE_BALL):
 
-#create balls class
-
-
-class Ball:
-    time = 1 / 60
-    ball_speed_x = 0
-    ball_speed_y = 0
-    count_balls = 0
-    pos_x = ball_speed_x * time
-    pos_y = ball_speed_y * time
-
-    def __init__(self, ball_speed_x, ball_speed_y, acceleration_y, radius, screen_height, screen_width, mass, mode):
-        self.ball_speed_x = ball_speed_x
-        self.ball_speed_y = ball_speed_y
-        self.acceleration_y = acceleration_y
-        self.radius = radius
-        self.screen_width = screen_width
-        self.screen_height = screen_height
-        self.mass = mass
-        if mode == 1:
-            self.ball = pygame.Rect(screen_width / 2 - radius / 2, screen_height / 2 - radius / 2, radius, radius)
-        else:
-            self.ball = pygame.Rect(random.randint(200, 1000), screen_height / 2 - radius / 2, radius, radius)
-        Ball.count_balls += 1
-
-    def ball_collision(self, ball2_obj):
-        if self.ball.bottom >= self.screen_height or self.ball.top <= 0:
+    def check_wall_collision(self, screen_height, screen_width):
+        if self.y >= screen_height - self.radius:
             self.ball_speed_y *= -1
-        if self.ball.left <= 0 or self.ball.right >= self.screen_width:
+            self.y = screen_height - self.radius
+        elif self.y <= self.radius:
+            self.ball_speed_y *= -1
+            self.y = self.radius
+        if self.x >= screen_width - self.radius:
             self.ball_speed_x *= -1
-        self.ball_collision_2balls(ball2_obj)
-        return self.ball_speed_x, self.ball_speed_y
+            self.x = screen_width - self.radius
+        elif self.x <= self.radius:
+            self.ball_speed_x *= -1
+            self.x = self.radius
 
-    def ball_collision_2balls(self, ball2_obj):
-        m1 = ball2_obj.mass
-        m2 = self.mass
-        v1 = self.ball_speed_x
-        v2 = ball2_obj.ball_speed_x
-        v1_y = self.ball_speed_y
-        v2_y = ball2_obj.ball_speed_y
-        distance = self.distance(ball2_obj)
-        print("distance=", distance)
-        if distance <= (self.radius / 2) + (ball2_obj.radius / 2):
-            self.ball_speed_x = ((m1 - m2) * v1 + 2 * m2 * v2) / (m1 + m2)
-            ball2_obj.ball_speed_x = ((m2 - m1) * v2 + 2 * m1 * v1) / (m1 + m2)
-            self.ball_speed_y = ((m1 - m2) * v1_y + 2 * m2 * v2_y) / (m1 + m2)
-            ball2_obj.ball_speed_y = ((m2 - m1) * v2_y + 2 * m1 * v1_y) / (m1 + m2)
-            print("!!!!!!!!!!!!!!!!HIT!!!!!!!!!!!!!!!!HIT")
+    def move(self, screen):
+        self.check_wall_collision(screen.get_height(), screen.get_width())
+        self.ball_speed_y += self.gravity * self.time
+        self.x += self.ball_speed_x
+        self.y += self.ball_speed_y
+
+
+    def handle_collision_2d(self, other):
+        distance, angle = self.distance(other)
+        if self.check_collison_2d(other):
+            m1, m2 = self.mass, other.mass
+            v1x, v1y = self.ball_speed_x, self.ball_speed_y
+            v2x, v2y = other.ball_speed_x, other.ball_speed_y
+            x1, y1 = self.x, self.y
+            x2, y2 = other.x, other.y
+
+            u1x = ((m1 - m2) * v1x + 2 * m2 * v2x) / (m1 + m2)
+            u2x = ((m2 - m1) * v2x + 2 * m1 * v1x) / (m1 + m2)
+            u1y = ((m1 - m2) * v1y + 2 * m2 * v2y) / (m1 + m2)
+            u2y = ((m2 - m1) * v2y + 2 * m1 * v1y) / (m1 + m2)
+
+            self.ball_speed_x = u1x
+            self.ball_speed_y = u1y
+            other.ball_speed_x = u2x
+            other.ball_speed_y = u2y
+
+            overlap=(self.radius + other.radius)-distance
+            print(angle)
+            other.x += overlap * math.cos(angle)
+            other.y += overlap * math.sin(angle)
+
             pygame.mixer.music.play()
 
-        return self.ball_speed_x, self.ball_speed_y
 
-    def ball_animation(self, ball2_obj):
-        # Pyhsics
-        self.ball_speed_y += self.acceleration_y * self.time
-        self.ball.x += self.ball_speed_x
-        self.ball.y += self.ball_speed_y
-        self.ball_collision(ball2_obj)
-        return self.ball_speed_x, self.ball_speed_y
-
-    def ball_restart(self):
-        self.ball.center = (self.screen_width / 2, self.screen_height / 2)
-        self.ball_speed_x = 3 * random.choice((1, -1))
-        self.ball_speed_y = 7
-
-    # update:
-    def update(self, ball_speed_x, ball_speed_y, ball):
-        self.ball_speed_x = ball_speed_x
-        self.ball_speed_y = ball_speed_y
-        self.ball = ball
-
-    def set_speed_x(self, ball_speed_x):
-        self.ball_speed_x = ball_speed_x
-
-    def set_speed_y(self, ball_speed_y):
-        self.ball_speed_y = ball_speed_y
-
-    def x_pos(self):
-        return self.ball.centerx
-
-    def y_pos(self):
-        return self.ball.centery
-
-    def distance(self, ball2_obj):
-        self_x = self.x_pos()
-        self_y = self.y_pos()
-        ball2_x = ball2_obj.x_pos()
-        ball2_y = ball2_obj.y_pos()
-        # print("x=", self_x)
-        # print("y=", self_y)
-        # print("x2=", ball2_x)
-        # print("y2=", ball2_y)
-        return math.sqrt((ball2_y - self_y) ** 2 + (ball2_x - self_x) ** 2)
