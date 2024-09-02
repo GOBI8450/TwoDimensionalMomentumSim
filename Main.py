@@ -1,5 +1,25 @@
+import time
+
 import pygame, sys, random
 from BALLS import balls
+from playerball import PlayerBall
+from ball_obj import BallObj
+import numpy as np
+from grid import Grid
+
+
+def generate_gradient_steps(start_color, end_color, steps):
+    gradient_steps = []
+
+    # Interpolate the colors
+    for i in range(steps):
+        r = np.interp(i, [0, steps - 1], [start_color[0], end_color[0]])
+        g = np.interp(i, [0, steps - 1], [start_color[1], end_color[1]])
+        b = np.interp(i, [0, steps - 1], [start_color[2], end_color[2]])
+        gradient_steps.append((int(r), int(g), int(b)))
+
+    return gradient_steps
+
 
 pygame.init()
 pygame.mixer.init()
@@ -22,10 +42,12 @@ gravity = 9.8
 
 # Ball Attribute
 radius = 50
-
-balls_list = balls()
-balls_list.new_ball_exact_mass(gravity=0, radius=radius, mass=1, color=light_grey, screen=screen)
-main_ball = balls_list.balls[0]
+# create the grid
+grid = Grid(screen, 15)
+# create the main ball
+grid.new_player_to_grid(gravity=0, radius=radius, color=light_grey)
+main_ball_index = grid.check_grid(screen_width / 2, screen_height / 2)
+main_ball=grid.grids[main_ball_index].balls[0]
 
 # Other features:
 fps_flag = True
@@ -34,10 +56,16 @@ touched_ball = False
 spawn_flag = False
 
 # Mouse speed configuration:
-max_speed_x = 0
-max_speed_y = 0
 mouse_speed_x, mouse_speed_y, max_speed_x, max_speed_y = 0, 0, 0, 0
 
+# Define the start and end colors in RGB
+start_color = (255, 0, 0)  # Red
+end_color = (0, 0, 255)  # Blue
+# Define the number of steps of color change
+steps = 100
+# Generate the gradient steps and print the RGB values
+gradient_steps = generate_gradient_steps(start_color, end_color, steps)
+loop_count = 0
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -47,7 +75,6 @@ while True:
             if event.button == 1:
                 dragging = True
                 mouse_x, mouse_y = pygame.mouse.get_pos()
-                print(mouse_x + main_ball.radius)
                 if max(main_ball.x, mouse_x) - min(main_ball.x, mouse_x) < radius and max(main_ball.y, mouse_y) - min(
                         main_ball.y, mouse_y) < radius:
                     touched_ball = True
@@ -69,12 +96,24 @@ while True:
             if event.key == pygame.K_a:
                 spawn_flag = True
             if event.key == pygame.K_h:
-                balls_list.new_ball_exact_pos(x=random.randint(0, screen_width), y=random.randint(0, screen_height),
-                                              gravity=gravity, radius=random.randint(10, 100),
-                                              color=(
-                                                  random.randint(0, 255), random.randint(0, 255),
-                                                  random.randint(0, 255)),
-                                              screen=screen)
+                grid.new_to_grid(x=random.randint(0, screen_width), y=random.randint(0, screen_height),
+                                 gravity=gravity, radius=10,
+                                 color=(
+                                     255, 255,
+                                     255))
+            if event.key == pygame.K_j:
+                grid.new_to_grid(x=random.randint(0, screen_width), y=random.randint(0, screen_height),
+                                 gravity=gravity, radius=10,
+                                 color=(220, 95, 0))
+            if event.key == pygame.K_g:
+                grid.new_to_grid(x=random.randint(0, screen_width), y=random.randint(0, screen_height),
+                                 gravity=gravity, radius=random.randint(10, 30),
+                                 color=(
+                                     random.randint(0, 255), random.randint(0, 255),
+                                     random.randint(0, 255)))
+                grid.new_to_grid(x=random.randint(0, screen_width), y=random.randint(0, screen_height),
+                                 gravity=gravity, radius=random.randint(10, 100),
+                                 color=(220, 95, 0))
             if event.key == pygame.K_DOWN:
                 main_ball.ball_speed_y = 10
             if event.key == pygame.K_UP:
@@ -85,8 +124,9 @@ while True:
                 main_ball.ball_speed_x = -10
             # Fetures Like Gravity Change:
             if event.key == pygame.K_9:
-                if len(balls_list.balls) > 1:
-                    balls_list.change_gravity(balls_list.balls[1].gravity * -1)
+                if grid.count > 1:
+                    gravity *= -1
+                    grid.change_gravity(gravity)
                     print("Gravity Reversed")
                 else:
                     print("Cant Change gravity, Add more ball by pressing A")
@@ -98,39 +138,43 @@ while True:
                     fps = 60
                     fps_flag = True
             if event.key == pygame.K_r:
-                balls_list.restart()
+                grid.restart()
 
         # If you release a button:
         if event.type == pygame.KEYUP:
-            if event.key == pygame.K_DOWN:
-                balls_list.balls[0].ball_speed_y -= 10
-                balls_list.balls[0].ball_speed_x = 0
-            if event.key == pygame.K_UP:
-                balls_list.balls[0].ball_speed_y += 10
-                balls_list.balls[0].ball_speed_x = 0
-            if event.key == pygame.K_RIGHT:
-                balls_list.balls[0].ball_speed_x -= 10
-                balls_list.balls[0].ball_speed_y = 0
-            if event.key == pygame.K_LEFT:
-                balls_list.balls[0].ball_speed_x += 10
-                balls_list.balls[0].ball_speed_y = 0
+            #controll with mouse
+            # if event.key == pygame.K_DOWN:
+            #     main_ball.ball_speed_y -= 10
+            #     main_ball.ball_speed_x = 0
+            # if event.key == pygame.K_UP:
+            #     main_ball.ball_speed_y += 10
+            #     main_ball.ball_speed_x = 0
+            # if event.key == pygame.K_RIGHT:
+            #     main_ball.ball_speed_x -= 10
+            #     main_ball.ball_speed_y = 0
+            # if event.key == pygame.K_LEFT:
+            #     main_ball.ball_speed_x += 10
+            #     main_ball.ball_speed_y = 0
             if event.key == pygame.K_a:
                 spawn_flag = False
+                print(grid.count)
 
     # Visuals
     screen.fill(bg_color)
     if spawn_flag:
-        balls_list.new_ball_exact_pos(x=random.randint(0, screen_width), y=random.randint(0, screen_height),
-                                      gravity=gravity, radius=random.randint(10, 30),
-                                      color=(
-                                          random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)),
-                                      screen=screen)
-    balls_list.handle_collisions(mouse_speed_x, mouse_speed_y)
-    main_ball.draw(screen)
-    for ball in balls_list.balls[1:]:
-        ball.draw(screen)
-        ball.move(screen)
-
+        color_now = gradient_steps[loop_count]
+        grid.new_to_grid(x=random.randint(0, screen_width), y=random.randint(0, screen_height),
+                         gravity=gravity, radius=random.randint(10, 30),
+                         color=color_now)
+        if loop_count != steps - 1:
+            loop_count += 1
+        else:
+            gradient_steps.reverse()
+            loop_count = 0
+    grid.check_collisions_grid(mouse_speed_x, mouse_speed_y)
+    # Draw to screen
+    grid.draw_and_move_balls()
     # Update Screen
+    print(int(clock.get_fps()))  # print current fps
     pygame.display.flip()
     clock.tick(fps)
