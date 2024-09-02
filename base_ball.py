@@ -1,4 +1,4 @@
-import pygame, random, math
+import pygame, math
 
 pygame.init()
 sound_hit = 'collision_sound.wav'
@@ -6,7 +6,7 @@ pygame.mixer.music.load(sound_hit)
 pygame.mixer.music.set_volume(0.7)
 
 
-class BASE_BALL:
+class BaseBall:
     time = 1 / 60
 
     def __init__(self, x, y, gravity, radius, mass, color, id, screen):
@@ -35,6 +35,8 @@ class BASE_BALL:
     def check_collison_2d(self, other):
         distance, angle = self.distance(other)
         if distance <= other.radius + self.radius:
-            print("HIT")
             return True
         return False
+
+    def __str__(self):
+        return f"Ball(Position: ({self.x}, {self.y}), Speed: ({self.ball_speed_x}, {self.ball_speed_y}), Radius: {self.radius})"
