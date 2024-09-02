@@ -1,12 +1,13 @@
-import pygame,random,math
-from base_ball import BASE_BALL
+import pygame, math
+from baseball import BaseBall
 
 pygame.init()
 sound_hit = 'collision_sound.wav'
 pygame.mixer.music.load(sound_hit)
 pygame.mixer.music.set_volume(0.7)
 
-class Ball(BASE_BALL):
+
+class BallObj(BaseBall):
 
     def check_wall_collision(self, screen_height, screen_width):
         if self.y >= screen_height - self.radius:
@@ -28,7 +29,6 @@ class Ball(BASE_BALL):
         self.x += self.ball_speed_x
         self.y += self.ball_speed_y
 
-
     def handle_collision_2d(self, other):
         distance, angle = self.distance(other)
         if self.check_collison_2d(other):
@@ -48,11 +48,8 @@ class Ball(BASE_BALL):
             other.ball_speed_x = u2x
             other.ball_speed_y = u2y
 
-            overlap=(self.radius + other.radius)-distance
-            print(angle)
+            overlap = (self.radius + other.radius) - distance
             other.x += overlap * math.cos(angle)
             other.y += overlap * math.sin(angle)
 
             pygame.mixer.music.play()
-
-
