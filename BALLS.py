@@ -25,12 +25,10 @@ class balls:
     def add_ball(self, ball):
         self.balls.append(ball)
 
-    def combine_balls_list(self, this_balls, other_balls):
-        new_list = this_balls
+    def combine_balls_list(self, other_balls):
+        new_list = self.balls
         for ball in other_balls.balls:
-            new_list.balls.add_ball(ball)
-        for ball in this_balls.balls:
-            new_list.balls.add_ball(ball)
+            self.add_ball(ball)
         return new_list
 
     def check_walls(self):
@@ -54,9 +52,9 @@ class balls:
                     else:
                         other_ball.handle_collision_2d(ball, mouse_speed_x, mouse_speed_y)
 
-    def handle_collisions_other_grid(self,other_grid,mouse_speed_x, mouse_speed_y):
-        temp_list=self.balls+other_grid.balls
-        self.handle_collisions_mouse(temp_list,mouse_speed_x, mouse_speed_y)
+    def handle_collisions_other_grid(self, other_grid, mouse_speed_x, mouse_speed_y):
+        temp_list = self.balls + other_grid.balls
+        self.handle_collisions_mouse(temp_list, mouse_speed_x, mouse_speed_y)
 
     def restart(self):
         self.balls = [self.balls[0]]
@@ -90,6 +88,11 @@ class balls:
 
     def remove_ball(self, ball):
         self.balls.remove(ball)
+
+    def get_ball_by_id(self, id):
+        for ball in self.balls:
+            if ball.id == id:
+                return ball
 
     def __str__(self):
         return f"Balls : ({self.balls.__str__()})"
