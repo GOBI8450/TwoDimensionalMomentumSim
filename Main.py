@@ -6,6 +6,7 @@ from playerball import PlayerBall
 from ball_obj import BallObj
 import numpy as np
 from grid import Grid
+import cProfile
 
 
 def generate_gradient_steps(start_color, end_color, steps):
@@ -38,16 +39,17 @@ bg_color = pygame.Color('grey12')
 light_grey = (200, 200, 200)
 
 # Pyshics
-gravity = 0
+gravity = 9.8
 
 # Ball Attribute
 radius = 50
 # create the grid
-grid = Grid(screen, 15)
+grid_count = 15
+grid = Grid(screen, grid_count)
 # create the main ball
 grid.new_player_to_grid(gravity=0, radius=radius, color=light_grey)
-main_ball_index = grid.check_grid(screen_width / 2, screen_height / 2)
-main_ball = grid.grids[main_ball_index].balls[0]
+main_ball_index = grid.get_grid_index(screen_width / 2, screen_height / 2)
+main_ball = grid.grids[main_ball_index].balls_list[0]
 
 # Other features:
 fps_flag = True
@@ -142,19 +144,6 @@ while True:
 
         # If you release a button:
         if event.type == pygame.KEYUP:
-            # controll with mouse
-            # if event.key == pygame.K_DOWN:
-            #     main_ball.ball_speed_y -= 10
-            #     main_ball.ball_speed_x = 0
-            # if event.key == pygame.K_UP:
-            #     main_ball.ball_speed_y += 10
-            #     main_ball.ball_speed_x = 0
-            # if event.key == pygame.K_RIGHT:
-            #     main_ball.ball_speed_x -= 10
-            #     main_ball.ball_speed_y = 0
-            # if event.key == pygame.K_LEFT:
-            #     main_ball.ball_speed_x += 10
-            #     main_ball.ball_speed_y = 0
             if event.key == pygame.K_a:
                 spawn_flag = False
                 print(grid.count)
@@ -164,7 +153,7 @@ while True:
     if spawn_flag:
         color_now = gradient_steps[loop_count]
         grid.new_to_grid(x=random.randint(0, screen_width), y=random.randint(0, screen_height),
-                         gravity=gravity, radius=random.randint(10, 30),
+                         gravity=gravity, radius=10,  # random.randint(10, 30)
                          color=color_now)
         if loop_count != steps - 1:
             loop_count += 1
@@ -173,7 +162,7 @@ while True:
             loop_count = 0
 
     # Handle Physics
-    grid.check_collisions_grid(mouse_speed_x, mouse_speed_y)
+    grid.handle_grid(mouse_speed_x, mouse_speed_y)
     # Draw to screen
     grid.draw_and_move_balls()
     # Update Screen
